@@ -37,7 +37,7 @@ func NewApiClient(region string, locale string) (*ApiClient, error) {
 	var validLocales []string
 	switch region {
 	case "US", "United States":
-		host = "us.battle.net"
+		host = "us.api.battle.net"
 		validLocales = []string{"en_US", "es_MX", "pt_BR"}
 	case "EU", "Europe":
 		host = "eu.battle.net"
@@ -54,7 +54,7 @@ func NewApiClient(region string, locale string) (*ApiClient, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("Region '%s' is not valid", region))
 	}
-	
+
 	var client *ApiClient
 	if locale == "" {
 		client = &ApiClient{Host: host, Locale: validLocales[0]}
@@ -474,7 +474,6 @@ func (a *ApiClient) getWithParams(path string, queryParams map[string]string) ([
 		if err != nil {
 			return make([]byte, 0), err
 		}
-		request.Header.Add("Authorization", a.authorizationString(a.signature("GET", path)))
 	} else {
 		url = a.url(path, queryParams, false)
 		request, err = http.NewRequest("GET", url.String(), nil)
@@ -499,6 +498,7 @@ func (a *ApiClient) getWithParams(path string, queryParams map[string]string) ([
 
 func (a *ApiClient) url(path string, queryParamPairs map[string]string, ssl bool) *url.URL {
 	queryParamPairs["locale"] = a.Locale
+	queryParamPairs["apikey"] = a.Secret
 	queryParamList := make([]string, 0)
 	for k, v := range queryParamPairs {
 		queryParamList = append(queryParamList, k+"="+v)
@@ -512,7 +512,7 @@ func (a *ApiClient) url(path string, queryParamPairs map[string]string, ssl bool
 	return &url.URL{
 		Scheme:   scheme,
 		Host:     a.Host,
-		Path:     "/api/wow/" + path,
+		Path:     "/wow/" + path,
 		RawQuery: strings.Join(queryParamList, "&"),
 	}
 }
